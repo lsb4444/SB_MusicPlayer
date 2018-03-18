@@ -5,10 +5,14 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.VectorDrawable;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -18,6 +22,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -27,7 +33,7 @@ import com.lsb.sb_musicplayer.service.MyMusicService;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class ControllerFragment extends Fragment implements MyMusicService.MusicServiceCallback {
+public class ControllerFragment extends Fragment implements MyMusicService.MusicServiceCallback, View.OnClickListener {
 
 
     private ImageButton mPlayButton;
@@ -37,6 +43,9 @@ public class ControllerFragment extends Fragment implements MyMusicService.Music
     boolean mBound;
     public MediaPlayer mMediaPlayer;
     private ServiceConnection serviceConnection;
+    private ImageView mImageView;
+    private TextView mTitleText;
+    private TextView mArtistText;
 
     public ControllerFragment() {
         // Required empty public constructor
@@ -48,10 +57,17 @@ public class ControllerFragment extends Fragment implements MyMusicService.Music
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_controller, container, false);
+
+        mImageView = v.findViewById(R.id.controller_image);
+        mTitleText = v.findViewById(R.id.controller_title);
+        mArtistText = v.findViewById(R.id.controller_artist);
+
         mPlayButton = (ImageButton) v.findViewById(R.id.play_button);
         mNextButton = (ImageButton) v.findViewById(R.id.next_button);
         mPrevButton = (ImageButton) v.findViewById(R.id.prev_button);
 
+
+        // 서비스 바인드
         final ControllerFragment fragment = (ControllerFragment) getFragmentManager().findFragmentById(R.id.controller_fragment);
         Intent service = new Intent(getContext(), MyMusicService.class);
         serviceConnection = new ServiceConnection() {
@@ -70,12 +86,8 @@ public class ControllerFragment extends Fragment implements MyMusicService.Music
         };
         getContext().bindService(service, serviceConnection, Context.BIND_AUTO_CREATE);
 
-
+        mPlayButton.setOnClickListener(this);
         return v;
-    }
-
-    public void chageImage(Drawable drawable) {
-        mPlayButton.setImageDrawable(drawable);
     }
 
 
@@ -89,8 +101,14 @@ public class ControllerFragment extends Fragment implements MyMusicService.Music
     }
 
 
+    // 버튼 이미지 체인지
+    public void chageImage(Drawable drawable) {
+        mPlayButton.setImageDrawable(drawable);
+    }
+
+    // 콜백
     @Override
-    public void onCallback(MediaPlayer mediaPlayer, boolean play) {
+    public void onCallback(MediaPlayer mediaPlayer, boolean play, Uri uri) {
         mMediaPlayer = mediaPlayer;
 
         if (play) {
@@ -111,6 +129,36 @@ public class ControllerFragment extends Fragment implements MyMusicService.Music
                 BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
                 chageImage(bitmapDrawable);
             }
+        }
+        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+        mediaMetadataRetriever.setDataSource(getActivity(), uri);
+        byte[] picture = mediaMetadataRetriever.getEmbeddedPicture();
+
+        String artist = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+        String title = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+
+        mArtistText.setText(artist);
+        mTitleText.setText(title);
+
+        if (picture != null) {
+            Bitmap bitmap = BitmapFactory.decodeByteArray(picture, 0, picture.length);
+            mImageView.setImageBitmap(bitmap);
+        } else {
+            mImageView.setImageResource(R.mipmap.ic_launcher);
+        }
+
+    }
+
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.play_button:
+                if (mMediaPlayer.isPlaying()) {
+                    mMyService.pause();
+                } else {
+                    mMyService.reStart();
+                }
         }
     }
 }

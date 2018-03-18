@@ -43,6 +43,7 @@ public class MusicListFragment extends Fragment {
     }
 
 
+    // 노래 불러오고 uri 넘기기 서비스시작.
     private void songList() {
         Cursor cursor = getContext().getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 null,

@@ -2,12 +2,22 @@ package com.lsb.sb_musicplayer.service;
 
 import android.app.Service;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioManager;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.lsb.sb_musicplayer.R;
+
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 
@@ -23,6 +33,7 @@ public class MyMusicService extends Service {
     private MyBinder mBinder = new MyBinder();
 
     MusicServiceCallback mCallback;
+    private Uri mUri;
 
 
     public MyMusicService() {
@@ -30,15 +41,17 @@ public class MyMusicService extends Service {
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
     }
 
+
+    // 서비스 시작
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent.getAction();
         switch (action) {
             case ACTION_PLAY:
-                Uri uri = intent.getParcelableExtra("uri");
+                mUri = intent.getParcelableExtra("uri");
                 try {
-                    play(uri);
-                    mCallback.onCallback(mMediaPlayer, true);
+                    play(mUri);
+                    mCallback.onCallback(mMediaPlayer, true, mUri);
                 } catch (IOException e) {
                     Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
@@ -58,8 +71,8 @@ public class MyMusicService extends Service {
         mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mediaPlayer) {
-                if (!mediaPlayer.isPlaying()){
-                    mCallback.onCallback(mMediaPlayer, false);
+                if (!mediaPlayer.isPlaying()) {
+                    mCallback.onCallback(mMediaPlayer, false, mUri);
                     mMediaPlayer.reset();
                 }
             }
@@ -80,9 +93,10 @@ public class MyMusicService extends Service {
     }
 
 
+    // 재생 메소드
     public void play(Uri uri) throws IOException {
         if (mMediaPlayer.isPlaying()) {
-            pause();
+            mMediaPlayer.reset();
         }
         mMediaPlayer.setDataSource(this, uri);
         mMediaPlayer.prepareAsync();
@@ -96,15 +110,27 @@ public class MyMusicService extends Service {
 
     }
 
+    // 멈춤 메소드
     public void pause() {
         if (mMediaPlayer.isPlaying()) {
-            mMediaPlayer.stop();
-            mMediaPlayer.reset();
+//            mMediaPlayer.stop();
+//            mMediaPlayer.reset();
+            mMediaPlayer.pause();
+            mCallback.onCallback(mMediaPlayer, false, mUri);
         }
     }
 
+    // 리스타트 메소드
+    public void reStart() {
+        if (!mMediaPlayer.isPlaying()) {
+            mMediaPlayer.start();
+            mCallback.onCallback(mMediaPlayer, true, mUri);
+        }
+    }
+
+
     public interface MusicServiceCallback {
-        void onCallback(MediaPlayer mediaPlayer, boolean play);
+        void onCallback(MediaPlayer mediaPlayer, boolean play, Uri uri);
     }
 
     public void setCallback(MusicServiceCallback callback) {

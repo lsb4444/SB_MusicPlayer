@@ -38,7 +38,6 @@ public class MainActivity extends AppCompatActivity {
                     REQUEST_CODE_READ_EXTERNAL_STORAGE);
         }
 
-
         mTabLayout = findViewById(R.id.tab_layout);
         mViewPager = findViewById(R.id.view_pager);
         final Fragment mControllerFrag = getSupportFragmentManager().findFragmentById(R.id.controller_fragment);
