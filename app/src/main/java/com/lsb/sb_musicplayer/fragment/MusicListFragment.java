@@ -9,10 +9,13 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.lsb.sb_musicplayer.MainActivity;
 import com.lsb.sb_musicplayer.R;
 import com.lsb.sb_musicplayer.adapter.MyMusicCursorAdapter;
+import com.lsb.sb_musicplayer.service.MyMusicService;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -34,6 +37,13 @@ public class MusicListFragment extends Fragment {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_music_list, container, false);
         mListView = (ListView) v.findViewById(R.id.music_list_view);
+        songList();
+
+        return v;
+    }
+
+
+    private void songList() {
         Cursor cursor = getContext().getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 null,
                 null,
@@ -43,6 +53,22 @@ public class MusicListFragment extends Fragment {
         mAdapter = new MyMusicCursorAdapter(getActivity(), cursor);
         mListView.setAdapter(mAdapter);
 
-        return v;
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Cursor currentCursor = (Cursor) parent.getAdapter().getItem(position);
+
+                String uri = currentCursor.getString(currentCursor.getColumnIndex(MediaStore.Audio.Media.DATA));
+                ((MainActivity) getActivity()).getViewPager().setCurrentItem(0);
+
+
+                // https://developer.android.com/guide/topics/media/mediaplayer.html
+                Intent intent = new Intent(getContext(), MyMusicService.class);
+                intent.setAction(MyMusicService.ACTION_PLAY);
+                intent.putExtra("uri", Uri.parse(uri));
+                getContext().startService(intent);
+
+            }
+        });
     }
 }
