@@ -2,6 +2,7 @@ package com.lsb.sb_musicplayer.service;
 
 import android.app.Service;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
@@ -10,6 +11,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,8 +34,9 @@ public class MyMusicService extends Service {
     MusicServiceCallback mCallback;
     MusicServiceCallback2 mCallback2;
     private Uri mUri;
-    private String mLength;
-    private String mNowPosition;
+    private int mLength;
+    private int mNowPosition;
+    private Cursor mCursor;
 
 
     public MyMusicService() {
@@ -42,20 +45,35 @@ public class MyMusicService extends Service {
     }
 
 
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        mCursor = getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                null,
+                null,
+                null,
+                null);
+    }
+
     // 서비스 시작
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
+
         String action = intent.getAction();
         switch (action) {
             case ACTION_PLAY:
-                mUri = intent.getParcelableExtra("uri");
-                mLength = intent.getParcelableExtra("length");
-                mNowPosition = intent.getParcelableExtra("now_position");
+//                mUri = intent.getParcelableExtra("uri");
+                mLength = intent.getIntExtra("length", -1);
+                mNowPosition = intent.getIntExtra("now_position", -1);
+
+                mCursor.moveToPosition(mNowPosition);
                 try {
                     mMediaPlayer.reset();
+
+                    mUri = Uri.parse(mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DATA)));
                     play(mUri);
-                    mCallback.onControllerCallback(mMediaPlayer, true);
-                    mCallback2.onNowCallback(mMediaPlayer, true);
+
                 } catch (IOException e) {
                     Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
@@ -112,6 +130,8 @@ public class MyMusicService extends Service {
             }
 
         });
+        mCallback.onControllerCallback(mMediaPlayer, true);
+        mCallback2.onNowCallback(mMediaPlayer, true);
 
     }
 
@@ -132,6 +152,44 @@ public class MyMusicService extends Service {
             mMediaPlayer.start();
             mCallback.onControllerCallback(mMediaPlayer, true);
             mCallback2.onNowCallback(mMediaPlayer, true);
+        }
+    }
+
+    // 다음곡 메소드
+    public void next() {
+        mMediaPlayer.reset();
+        if (mMediaPlayer != null) {
+            if (mNowPosition < mLength) {
+                mNowPosition++;
+                if (mNowPosition == mLength) {
+                    mNowPosition = 0;
+                }
+            }
+            mCursor.moveToPosition(mNowPosition);
+            mUri = Uri.parse(mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DATA)));
+            try {
+                play(mUri);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void peve() {
+        mMediaPlayer.reset();
+        if (mNowPosition != 0) {
+            mNowPosition--;
+            mCursor.moveToPrevious();
+        } else {
+            mNowPosition = mLength - 1;
+            mCursor.moveToLast();
+        }
+
+        mUri = Uri.parse(mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DATA)));
+        try {
+            play(mUri);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -159,6 +217,7 @@ public class MyMusicService extends Service {
     public interface MusicServiceCallback {
         void onControllerCallback(MediaPlayer mediaPlayer, boolean play);
     }
+
     public interface MusicServiceCallback2 {
         void onNowCallback(MediaPlayer mediaPlayer, boolean play);
     }

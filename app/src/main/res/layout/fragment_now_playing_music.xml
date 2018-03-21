@@ -23,8 +23,8 @@
 
             <ImageView
                 android:id="@+id/now_image"
-                android:layout_width="150dp"
-                android:layout_height="150dp"
+                android:layout_width="250dp"
+                android:layout_height="250dp"
                 android:layout_gravity="center"
                 app:srcCompat="@drawable/ic_launcher_background" />
         </LinearLayout>
@@ -40,7 +40,8 @@
                 android:id="@+id/now_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="제목" />
+                android:text="제목"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 
             <TextView
                 android:id="@+id/now_artist"

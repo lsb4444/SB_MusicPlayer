@@ -11,7 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.Toast;
+
 import com.lsb.sb_musicplayer.MainActivity;
 import com.lsb.sb_musicplayer.R;
 import com.lsb.sb_musicplayer.adapter.MyMusicCursorAdapter;
@@ -59,16 +59,16 @@ public class MusicListFragment extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Cursor currentCursor = (Cursor) parent.getAdapter().getItem(position);
 
-                String uri = currentCursor.getString(currentCursor.getColumnIndex(MediaStore.Audio.Media.DATA));
+//                String uri = currentCursor.getString(currentCursor.getColumnIndex(MediaStore.Audio.Media.DATA));
                 ((MainActivity) getActivity()).getViewPager().setCurrentItem(0);
 
 
                 // https://developer.android.com/guide/topics/media/mediaplayer.html
                 Intent intent = new Intent(getContext(), MyMusicService.class);
                 intent.setAction(MyMusicService.ACTION_PLAY);
-                intent.putExtra("length",mListView.getCount());
-                intent.putExtra("uri", Uri.parse(uri));
-                intent.putExtra("now_position",position);
+                intent.putExtra("length", mListView.getCount());
+//                intent.putExtra("uri", Uri.parse(uri));
+                intent.putExtra("now_position", currentCursor.getPosition());
                 getContext().startService(intent);
 
             }

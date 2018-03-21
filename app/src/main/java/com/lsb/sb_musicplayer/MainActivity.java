@@ -42,7 +42,6 @@ public class MainActivity extends AppCompatActivity {
         final Fragment mControllerFrag = getSupportFragmentManager().findFragmentById(R.id.controller_fragment);
 
 
-
         mViewPager.setAdapter(new MyViewPager(getSupportFragmentManager()));
         mViewPager.setCurrentItem(1);
 
@@ -118,7 +117,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return mViewPager;
     }
-
 
 
     @Override

@@ -70,9 +70,13 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
         mRepeat.setOnClickListener(this);
 
 
-        mPervious = v.findViewById(R.id.now_pervious_button);
         mPlay = v.findViewById(R.id.now_play_button);
         mNext = v.findViewById(R.id.now_next_button);
+        mPervious = v.findViewById(R.id.now_pervious_button);
+
+        mPlay.setOnClickListener(this);
+        mNext.setOnClickListener(this);
+        mPervious.setOnClickListener(this);
 
 
         final NowPlayingMusicFragment fragment = (NowPlayingMusicFragment) getFragmentManager().findFragmentByTag("android:switcher:" + R.id.view_pager + ":" + 0);
@@ -93,6 +97,7 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
         };
         getContext().bindService(service, serviceConnection, Context.BIND_AUTO_CREATE);
 
+
         return v;
     }
 
@@ -107,8 +112,23 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
                 mRepeat.setSelected(!mRepeat.isSelected());
                 break;
 
-        }
+            case R.id.now_play_button:
+                if (mMediaPlayer.isPlaying()) {
+                    mMyService.pause();
+                } else {
+                    mMyService.reStart();
+                }
+                break;
 
+            case R.id.now_next_button:
+                mMyService.next();
+                break;
+
+            case R.id.now_pervious_button:
+                mMyService.peve();
+                break;
+
+        }
     }
 
     public void chageImage(Drawable drawable) {
@@ -117,6 +137,7 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
 
     @Override
     public void onNowCallback(MediaPlayer mediaPlayer, boolean play) {
+        mMediaPlayer = mediaPlayer;
         if (play) {
             Drawable drawable = ActivityCompat.getDrawable(getActivity(), R.drawable.ic_pause_circle_filled_black_24dp);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -136,5 +157,6 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
                 chageImage(bitmapDrawable);
             }
         }
+        mMyService.uiChange(mNowImage, mTitleText, mArtistText);
     }
 }

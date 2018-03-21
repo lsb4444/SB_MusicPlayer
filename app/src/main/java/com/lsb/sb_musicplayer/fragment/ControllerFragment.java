@@ -82,6 +82,8 @@ public class ControllerFragment extends Fragment implements MyMusicService.Music
         getContext().bindService(service, serviceConnection, Context.BIND_AUTO_CREATE);
 
         mPlayButton.setOnClickListener(this);
+        mNextButton.setOnClickListener(this);
+        mPrevButton.setOnClickListener(this);
         return v;
     }
 
@@ -142,6 +144,13 @@ public class ControllerFragment extends Fragment implements MyMusicService.Music
                 } else {
                     mMyService.reStart();
                 }
+                break;
+            case R.id.next_button:
+                mMyService.next();
+                break;
+            case R.id.prev_button:
+                mMyService.peve();
+                break;
         }
     }
 }
