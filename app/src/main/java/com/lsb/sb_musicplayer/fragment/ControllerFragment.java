@@ -140,16 +140,24 @@ public class ControllerFragment extends Fragment implements MyMusicService.Music
                 if (mMediaPlayer == null) {
 
                 } else if (mMediaPlayer.isPlaying()) {
-                    mMyService.pause();
+                    Intent pause = new Intent(getContext(), MyMusicService.class);
+                    pause.setAction(MyMusicService.ACTION_PAUSE);
+                    getContext().startService(pause);
                 } else {
-                    mMyService.reStart();
+                    Intent re_start = new Intent(getContext(), MyMusicService.class);
+                    re_start.setAction(MyMusicService.ACTION_RESTART);
+                    getContext().startService(re_start);
                 }
                 break;
             case R.id.next_button:
-                mMyService.next();
+                Intent next = new Intent(getContext(), MyMusicService.class);
+                next.setAction(MyMusicService.ACTION_NEXT);
+                getContext().startService(next);
                 break;
             case R.id.prev_button:
-                mMyService.peve();
+                Intent prev = new Intent(getContext(), MyMusicService.class);
+                prev.setAction(MyMusicService.ACTION_PREV);
+                getContext().startService(prev);
                 break;
         }
     }

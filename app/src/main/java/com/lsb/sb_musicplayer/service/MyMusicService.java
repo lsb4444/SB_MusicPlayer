@@ -26,6 +26,7 @@ public class MyMusicService extends Service {
     public static final String ACTION_PAUSE = "com.lsb.simple_player.action.pause";
     public static final String ACTION_PREV = "com.lsb.simple_player.action.prev";
     public static final String ACTION_NEXT = "com.lsb.simple_player.action.next";
+    public static final String ACTION_RESTART = "com.lsb.simple_player.action.restart";
 
     public MediaPlayer mMediaPlayer;
 
@@ -79,14 +80,20 @@ public class MyMusicService extends Service {
                     e.printStackTrace();
                 }
                 break;
+
+            case ACTION_RESTART:
+                reStart();
+                break;
             case ACTION_PAUSE:
                 pause();
                 break;
 
             case ACTION_PREV:
+                peve();
                 break;
 
             case ACTION_NEXT:
+                next();
                 break;
         }
 
