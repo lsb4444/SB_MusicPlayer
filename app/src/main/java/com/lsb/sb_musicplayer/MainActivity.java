@@ -29,7 +29,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
 //        임시 권한 체크
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -41,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
         mTabLayout = findViewById(R.id.tab_layout);
         mViewPager = findViewById(R.id.view_pager);
         final Fragment mControllerFrag = getSupportFragmentManager().findFragmentById(R.id.controller_fragment);
+
 
 
         mViewPager.setAdapter(new MyViewPager(getSupportFragmentManager()));
@@ -86,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
         public Fragment getItem(int position) {
             switch (position) {
                 case 0:
+
                     return new NowPlayingMusicFragment();
                 case 1:
                     return new MusicListFragment();
@@ -117,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
         }
         return mViewPager;
     }
+
 
 
     @Override

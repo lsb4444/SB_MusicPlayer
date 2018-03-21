@@ -10,14 +10,11 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.lsb.sb_musicplayer.R;
-
-import org.w3c.dom.Text;
 
 import java.io.IOException;
 
@@ -33,7 +30,10 @@ public class MyMusicService extends Service {
     private MyBinder mBinder = new MyBinder();
 
     MusicServiceCallback mCallback;
+    MusicServiceCallback2 mCallback2;
     private Uri mUri;
+    private String mLength;
+    private String mNowPosition;
 
 
     public MyMusicService() {
@@ -49,9 +49,13 @@ public class MyMusicService extends Service {
         switch (action) {
             case ACTION_PLAY:
                 mUri = intent.getParcelableExtra("uri");
+                mLength = intent.getParcelableExtra("length");
+                mNowPosition = intent.getParcelableExtra("now_position");
                 try {
+                    mMediaPlayer.reset();
                     play(mUri);
-                    mCallback.onCallback(mMediaPlayer, true, mUri);
+                    mCallback.onControllerCallback(mMediaPlayer, true);
+                    mCallback2.onNowCallback(mMediaPlayer, true);
                 } catch (IOException e) {
                     Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
@@ -72,7 +76,8 @@ public class MyMusicService extends Service {
             @Override
             public void onCompletion(MediaPlayer mediaPlayer) {
                 if (!mediaPlayer.isPlaying()) {
-                    mCallback.onCallback(mMediaPlayer, false, mUri);
+                    mCallback.onControllerCallback(mMediaPlayer, false);
+                    mCallback2.onNowCallback(mMediaPlayer, false);
                     mMediaPlayer.reset();
                 }
             }
@@ -116,7 +121,8 @@ public class MyMusicService extends Service {
 //            mMediaPlayer.stop();
 //            mMediaPlayer.reset();
             mMediaPlayer.pause();
-            mCallback.onCallback(mMediaPlayer, false, mUri);
+            mCallback.onControllerCallback(mMediaPlayer, false);
+            mCallback2.onNowCallback(mMediaPlayer, false);
         }
     }
 
@@ -124,17 +130,45 @@ public class MyMusicService extends Service {
     public void reStart() {
         if (!mMediaPlayer.isPlaying()) {
             mMediaPlayer.start();
-            mCallback.onCallback(mMediaPlayer, true, mUri);
+            mCallback.onControllerCallback(mMediaPlayer, true);
+            mCallback2.onNowCallback(mMediaPlayer, true);
         }
     }
 
 
-    public interface MusicServiceCallback {
-        void onCallback(MediaPlayer mediaPlayer, boolean play, Uri uri);
+    // 음악 사진, 제목, 가수 이름
+    public void uiChange(ImageView imageView, TextView titleView, TextView artistView) {
+        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+        mediaMetadataRetriever.setDataSource(this, mUri);
+        byte[] picture = mediaMetadataRetriever.getEmbeddedPicture();
+
+        String title = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+        String artist = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+
+        titleView.setText(title);
+        artistView.setText(artist);
+
+        if (picture != null) {
+            Bitmap bitmap = BitmapFactory.decodeByteArray(picture, 0, picture.length);
+            imageView.setImageBitmap(bitmap);
+        } else {
+            imageView.setImageResource(R.mipmap.ic_launcher);
+        }
     }
 
-    public void setCallback(MusicServiceCallback callback) {
+    public interface MusicServiceCallback {
+        void onControllerCallback(MediaPlayer mediaPlayer, boolean play);
+    }
+    public interface MusicServiceCallback2 {
+        void onNowCallback(MediaPlayer mediaPlayer, boolean play);
+    }
+
+    public void setControllerCallback(MusicServiceCallback callback) {
         mCallback = callback;
+    }
+
+    public void setNowCallback(MusicServiceCallback2 callback) {
+        mCallback2 = callback;
     }
 }
 

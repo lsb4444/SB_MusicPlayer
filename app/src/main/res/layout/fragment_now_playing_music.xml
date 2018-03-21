@@ -22,6 +22,7 @@
             android:layout_gravity="center">
 
             <ImageView
+                android:id="@+id/now_image"
                 android:layout_width="150dp"
                 android:layout_height="150dp"
                 android:layout_gravity="center"
@@ -36,11 +37,13 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/now_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="제목" />
 
             <TextView
+                android:id="@+id/now_artist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="가수" />
@@ -60,7 +63,7 @@
                 android:orientation="horizontal">
 
                 <SeekBar
-                    android:id="@+id/seekBar"
+                    android:id="@+id/now_seekBar"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1" />
@@ -83,7 +86,29 @@
 
             </RelativeLayout>
 
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginRight="8dp">
+
+                <ImageButton
+                    android:id="@+id/now_one_repeat_button"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_toLeftOf="@+id/now_repeat_button"
+                    android:background="@drawable/one_repeat_checked" />
+
+                <ImageButton
+                    android:id="@+id/now_repeat_button"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_alignParentEnd="true"
+                    android:background="@drawable/repeat_checked" />
+
+            </RelativeLayout>
         </LinearLayout>
+
 
         <LinearLayout
 
@@ -93,16 +118,19 @@
             android:orientation="horizontal">
 
             <ImageButton
+                android:id="@+id/now_pervious_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:srcCompat="@drawable/ic_skip_previous_black_24dp" />
 
             <ImageButton
+                android:id="@+id/now_play_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:srcCompat="@drawable/ic_play_circle_filled_black_24dp" />
 
             <ImageButton
+                android:id="@+id/now_next_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:srcCompat="@drawable/ic_skip_next_black_24dp" />

@@ -5,14 +5,10 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.VectorDrawable;
-import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -24,7 +20,6 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 
 import com.lsb.sb_musicplayer.R;
@@ -74,7 +69,7 @@ public class ControllerFragment extends Fragment implements MyMusicService.Music
             @Override
             public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
                 mMyService = ((MyMusicService.MyBinder) iBinder).getService();
-                mMyService.setCallback(fragment);
+                mMyService.setControllerCallback(fragment);
                 mBound = true;
 
             }
@@ -108,7 +103,7 @@ public class ControllerFragment extends Fragment implements MyMusicService.Music
 
     // 콜백
     @Override
-    public void onCallback(MediaPlayer mediaPlayer, boolean play, Uri uri) {
+    public void onControllerCallback(MediaPlayer mediaPlayer, boolean play) {
         mMediaPlayer = mediaPlayer;
 
         if (play) {
@@ -130,22 +125,8 @@ public class ControllerFragment extends Fragment implements MyMusicService.Music
                 chageImage(bitmapDrawable);
             }
         }
-        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-        mediaMetadataRetriever.setDataSource(getActivity(), uri);
-        byte[] picture = mediaMetadataRetriever.getEmbeddedPicture();
 
-        String artist = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-        String title = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
-
-        mArtistText.setText(artist);
-        mTitleText.setText(title);
-
-        if (picture != null) {
-            Bitmap bitmap = BitmapFactory.decodeByteArray(picture, 0, picture.length);
-            mImageView.setImageBitmap(bitmap);
-        } else {
-            mImageView.setImageResource(R.mipmap.ic_launcher);
-        }
+        mMyService.uiChange(mImageView, mTitleText, mArtistText);
 
     }
 
@@ -154,7 +135,9 @@ public class ControllerFragment extends Fragment implements MyMusicService.Music
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.play_button:
-                if (mMediaPlayer.isPlaying()) {
+                if (mMediaPlayer == null) {
+
+                } else if (mMediaPlayer.isPlaying()) {
                     mMyService.pause();
                 } else {
                     mMyService.reStart();

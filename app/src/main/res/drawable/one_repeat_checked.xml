@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 평상시 -->
+    <item android:drawable="@drawable/ic_repeat_one"
+        android:state_focused="false"
+        android:state_selected="false"></item>
+
+    <!-- 클릭했을 때 -->
+    <item android:drawable="@drawable/ic_repeat_one_checked"
+        android:state_focused="true"
+        android:state_selected="true"></item>
+
+    <item android:drawable="@drawable/ic_repeat_one_checked" android:state_selected="true" />
+</selector>
