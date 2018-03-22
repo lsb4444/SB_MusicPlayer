@@ -34,7 +34,11 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
     private ImageView mNowImage;
     private TextView mTitleText;
     private TextView mArtistText;
+
     private SeekBar mSeekbar;
+    private TextView mNowTime;
+    private TextView mMaxTime;
+
     private ImageButton mRepeat;
     private ImageButton mOneRepeat;
     private ImageButton mPervious;
@@ -62,6 +66,10 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
         mArtistText = v.findViewById(R.id.now_artist);
 
         mSeekbar = v.findViewById(R.id.now_seekBar);
+        mMaxTime = v.findViewById(R.id.max_time_view);
+        mNowTime = v.findViewById(R.id.now_time_view);
+
+
         mOneRepeat = v.findViewById(R.id.now_one_repeat_button);
         mRepeat = v.findViewById(R.id.now_repeat_button);
 
@@ -156,7 +164,7 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
     }
 
     @Override
-    public void onNowCallback(MediaPlayer mediaPlayer, boolean play) {
+    public void onNowCallback(MediaPlayer mediaPlayer, final boolean play) {
         mMediaPlayer = mediaPlayer;
         if (play) {
             Drawable drawable = ActivityCompat.getDrawable(getActivity(), R.drawable.ic_pause_circle_filled_black_24dp);
@@ -177,6 +185,36 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
                 chageImage(bitmapDrawable);
             }
         }
+        playTime(play);
+
+    }
+
+
+    // 시간 표시 해주는 메소드
+    private void playTime(final boolean play) {
         mMyService.uiChange(mNowImage, mTitleText, mArtistText);
+
+        int duration = mMyService.getMediaPlayer().getDuration();
+        int min = duration / 1000 / 60;
+        int sec = duration / 1000 % 60;
+
+        mMaxTime.setText((String.format("%d:%02d", min, sec)));
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int CurrentPosition;
+                if (play) {
+                    CurrentPosition = mMyService.getMediaPlayer().getCurrentPosition();
+                    int min = CurrentPosition / 1000 / 60;
+                    int sec = CurrentPosition / 1000 % 60;
+
+                    mNowTime.setText(String.format("%d:%02d", min, sec));
+                    mNowTime.postDelayed(this, 1000);
+                } else {
+                    mNowTime.removeCallbacks(this);
+                }
+            }
+        }).run();
     }
 }

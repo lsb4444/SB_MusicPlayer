@@ -125,7 +125,7 @@ public class MyMusicService extends Service {
                     if (!mOneRepeat && !mRepeat) {
                         mCallback.onControllerCallback(mMediaPlayer, false);
                         mCallback2.onNowCallback(mMediaPlayer, false);
-                        mMediaPlayer.reset();
+                        pause();
                     } else if (mRepeat) {
                         next();
                     } else if (mOneRepeat) {
@@ -228,6 +228,7 @@ public class MyMusicService extends Service {
         }
     }
 
+    // 한곡 반복
     public void one_repeat() {
         mMediaPlayer.reset();
 
@@ -239,6 +240,11 @@ public class MyMusicService extends Service {
             e.printStackTrace();
         }
 
+    }
+
+    // 미디어 플레이어 넘기기
+    public MediaPlayer getMediaPlayer(){
+        return mMediaPlayer;
     }
 
 

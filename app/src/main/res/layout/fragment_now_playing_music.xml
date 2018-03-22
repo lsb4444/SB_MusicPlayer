@@ -75,11 +75,13 @@
                 android:layout_height="wrap_content">
 
                 <TextView
+                    android:id="@+id/now_time_view"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="0:00" />
 
                 <TextView
+                    android:id="@+id/max_time_view"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
