@@ -57,7 +57,7 @@ public class MyMusicService extends Service {
         super.onCreate();
         mCursor = getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 null,
-                null,
+                MediaStore.MediaColumns.MIME_TYPE + "='" + "audio/mpeg" + "'",
                 null,
                 null);
     }
@@ -243,7 +243,7 @@ public class MyMusicService extends Service {
     }
 
     // 미디어 플레이어 넘기기
-    public MediaPlayer getMediaPlayer(){
+    public MediaPlayer getMediaPlayer() {
         return mMediaPlayer;
     }
 

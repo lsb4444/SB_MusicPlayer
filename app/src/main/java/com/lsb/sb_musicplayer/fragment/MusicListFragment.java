@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.lsb.sb_musicplayer.MainActivity;
 import com.lsb.sb_musicplayer.R;
@@ -24,6 +25,7 @@ public class MusicListFragment extends Fragment {
 
     private ListView mListView;
     private MyMusicCursorAdapter mAdapter;
+    private Cursor mCurrentCursor;
 
     public MusicListFragment() {
         // Required empty public constructor
@@ -44,30 +46,31 @@ public class MusicListFragment extends Fragment {
 
     // 노래 불러오고 uri 넘기기 서비스시작.
     private void songList() {
-        Cursor cursor = getContext().getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+        mCurrentCursor = getContext().getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 null,
-                null,
+                MediaStore.MediaColumns.MIME_TYPE + "='" + "audio/mpeg" + "'",
                 null,
                 null);
 
-        mAdapter = new MyMusicCursorAdapter(getActivity(), cursor);
+        mAdapter = new MyMusicCursorAdapter(getActivity(), mCurrentCursor);
         mListView.setAdapter(mAdapter);
 
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Cursor currentCursor = (Cursor) parent.getAdapter().getItem(position);
+                mCurrentCursor = (Cursor) parent.getAdapter().getItem(position);
+
 
 //                String uri = currentCursor.getString(currentCursor.getColumnIndex(MediaStore.Audio.Media.DATA));
                 ((MainActivity) getActivity()).getViewPager().setCurrentItem(0);
 
-
+                Toast.makeText(getContext(), "" + position, Toast.LENGTH_SHORT).show();
                 // https://developer.android.com/guide/topics/media/mediaplayer.html
                 Intent intent = new Intent(getContext(), MyMusicService.class);
                 intent.setAction(MyMusicService.ACTION_PLAY);
                 intent.putExtra("length", mListView.getCount());
 //                intent.putExtra("uri", Uri.parse(uri));
-                intent.putExtra("now_position", currentCursor.getPosition());
+                intent.putExtra("now_position", mCurrentCursor.getPosition());
                 getContext().startService(intent);
 
             }
