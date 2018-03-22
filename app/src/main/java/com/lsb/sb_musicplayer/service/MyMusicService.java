@@ -28,6 +28,12 @@ public class MyMusicService extends Service {
     public static final String ACTION_NEXT = "com.lsb.simple_player.action.next";
     public static final String ACTION_RESTART = "com.lsb.simple_player.action.restart";
 
+    public static final String ACTION_ONE_REPEAT = "com.lsb.simple_player.action.onerepeat";
+    public static final String ACTION_REPEAT = "com.lsb.simple_player.action.repeat";
+
+    private boolean mOneRepeat;
+    private boolean mRepeat;
+
     public MediaPlayer mMediaPlayer;
 
     private MyBinder mBinder = new MyBinder();
@@ -76,7 +82,7 @@ public class MyMusicService extends Service {
                     play(mUri);
 
                 } catch (IOException e) {
-                    Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "I can't play a song", Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
                 }
                 break;
@@ -95,15 +101,36 @@ public class MyMusicService extends Service {
             case ACTION_NEXT:
                 next();
                 break;
+
+            case ACTION_ONE_REPEAT:
+                if (!mOneRepeat) {
+                    mOneRepeat = true;
+                } else {
+                    mOneRepeat = false;
+                }
+                break;
+            case ACTION_REPEAT:
+                if (!mRepeat) {
+                    mRepeat = true;
+                } else {
+                    mRepeat = false;
+                }
+                break;
         }
 
         mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mediaPlayer) {
                 if (!mediaPlayer.isPlaying()) {
-                    mCallback.onControllerCallback(mMediaPlayer, false);
-                    mCallback2.onNowCallback(mMediaPlayer, false);
-                    mMediaPlayer.reset();
+                    if (!mOneRepeat && !mRepeat) {
+                        mCallback.onControllerCallback(mMediaPlayer, false);
+                        mCallback2.onNowCallback(mMediaPlayer, false);
+                        mMediaPlayer.reset();
+                    } else if (mRepeat) {
+                        next();
+                    } else if (mOneRepeat) {
+                        one_repeat();
+                    }
                 }
             }
         });
@@ -182,6 +209,7 @@ public class MyMusicService extends Service {
         }
     }
 
+    // 이전곡 메소드
     public void peve() {
         mMediaPlayer.reset();
         if (mNowPosition != 0) {
@@ -198,6 +226,19 @@ public class MyMusicService extends Service {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void one_repeat() {
+        mMediaPlayer.reset();
+
+        mCursor.moveToPosition(mNowPosition);
+        mUri = Uri.parse(mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DATA)));
+        try {
+            play(mUri);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
 

@@ -77,6 +77,8 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
         mPlay.setOnClickListener(this);
         mNext.setOnClickListener(this);
         mPervious.setOnClickListener(this);
+        mOneRepeat.setOnClickListener(this);
+        mRepeat.setOnClickListener(this);
 
 
         final NowPlayingMusicFragment fragment = (NowPlayingMusicFragment) getFragmentManager().findFragmentByTag("android:switcher:" + R.id.view_pager + ":" + 0);
@@ -106,10 +108,21 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.now_one_repeat_button:
-                mOneRepeat.setSelected(!mOneRepeat.isSelected());
+                if (!mRepeat.isSelected()) {
+                    mOneRepeat.setSelected(!mOneRepeat.isSelected());
+                    Intent one_repeat = new Intent(getContext(), MyMusicService.class);
+                    one_repeat.setAction(MyMusicService.ACTION_ONE_REPEAT);
+                    getContext().startService(one_repeat);
+                }
                 break;
+
             case R.id.now_repeat_button:
-                mRepeat.setSelected(!mRepeat.isSelected());
+                if (!mOneRepeat.isSelected()) {
+                    mRepeat.setSelected(!mRepeat.isSelected());
+                    Intent reapeat = new Intent(getContext(), MyMusicService.class);
+                    reapeat.setAction(MyMusicService.ACTION_REPEAT);
+                    getContext().startService(reapeat);
+                }
                 break;
 
             case R.id.now_play_button:
@@ -135,7 +148,6 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
                 prev.setAction(MyMusicService.ACTION_PREV);
                 getContext().startService(prev);
                 break;
-
         }
     }
 
