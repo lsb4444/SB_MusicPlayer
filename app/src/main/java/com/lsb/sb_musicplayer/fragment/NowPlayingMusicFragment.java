@@ -74,6 +74,22 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
         mRepeat = v.findViewById(R.id.now_repeat_button);
 
 
+        mSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                mMyService.getMediaPlayer().seekTo(mSeekbar.getProgress());
+            }
+        });
         mOneRepeat.setOnClickListener(this);
         mRepeat.setOnClickListener(this);
 
@@ -199,6 +215,7 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
         int sec = duration / 1000 % 60;
 
         mMaxTime.setText((String.format("%d:%02d", min, sec)));
+        mSeekbar.setMax(duration);
 
         new Thread(new Runnable() {
             @Override
@@ -208,6 +225,7 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
                     CurrentPosition = mMyService.getMediaPlayer().getCurrentPosition();
                     int min = CurrentPosition / 1000 / 60;
                     int sec = CurrentPosition / 1000 % 60;
+                    mSeekbar.setProgress(CurrentPosition);
 
                     mNowTime.setText(String.format("%d:%02d", min, sec));
                     mNowTime.postDelayed(this, 1000);
