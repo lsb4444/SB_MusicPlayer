@@ -18,9 +18,9 @@ import android.os.Build;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
-import android.util.Log;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RemoteViews;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,6 +34,7 @@ public class MyMusicService extends Service {
     public static final String ACTION_PAUSE = "com.lsb.simple_player.action.pause";
     public static final String ACTION_PREV = "com.lsb.simple_player.action.prev";
     public static final String ACTION_NEXT = "com.lsb.simple_player.action.next";
+
     public static final String ACTION_RESTART = "com.lsb.simple_player.action.restart";
 
     public static final String ACTION_ONE_REPEAT = "com.lsb.simple_player.action.onerepeat";
@@ -73,8 +74,6 @@ public class MyMusicService extends Service {
     // 서비스 시작
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
-        Log.i("서비스 스타트", "2222222222");
         String action = intent.getAction();
         switch (action) {
             case ACTION_PLAY:
@@ -133,9 +132,12 @@ public class MyMusicService extends Service {
 
             case ACTION_FOREGRUOUND:
                 startForeground(1, createNotification());
+//                NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+//                manager.notify(1, createNotification());
                 break;
         }
 
+        // 재생 완료 후 버튼 처리 및 이벤트 처리
         if (mMediaPlayer != null) {
             mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
@@ -158,12 +160,33 @@ public class MyMusicService extends Service {
     }
 
     private Notification createNotification() {
-        android.support.v7.app.NotificationCompat.Builder builder = new android.support.v7.app.NotificationCompat.Builder(this);
-        builder.setContentTitle("뮤직플레이어");
-        builder.setContentText("아아");
-        builder.setSmallIcon(R.mipmap.ic_launcher);
+        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+        mediaMetadataRetriever.setDataSource(this, mUri);
+        byte[] picture = mediaMetadataRetriever.getEmbeddedPicture();
 
-        return builder.build();
+        String title = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+        String artist = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+        RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notify);
+        contentView.setTextViewText(R.id.noti_title, title);
+        contentView.setTextViewText(R.id.noti_artist, artist);
+        if (picture != null) {
+            Bitmap bitmap = BitmapFactory.decodeByteArray(picture, 0, picture.length);
+            contentView.setImageViewBitmap(R.id.noti_image, bitmap);
+        } else {
+
+        }
+//        contentView.setImageViewBitmap(R.id.noti_image2,bitmap);
+
+
+        Notification mBuilder = new Notification.Builder(this)
+                .setSmallIcon(R.drawable.ic_launcher_background)
+                .setContentTitle("SB_Player")
+                .setContent(contentView)
+                .build();
+
+
+        return mBuilder;
+
     }
 
 
@@ -290,8 +313,12 @@ public class MyMusicService extends Service {
         mediaMetadataRetriever.setDataSource(this, mUri);
         byte[] picture = mediaMetadataRetriever.getEmbeddedPicture();
 
-        String title = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
-        String artist = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+        //수정 전 코드
+//        String title = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+//        String artist = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+        mCursor.moveToPosition(mNowPosition);
+        String title = mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
+        String artist = mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
 
         titleView.setText(title);
         artistView.setText(artist);

@@ -138,12 +138,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
+    // 뒤로가기 버튼
     @Override
     public void onBackPressed() {
         stratForeground();
-
-
         super.onBackPressed();
+    }
+
+    // 홈버튼
+    @Override
+    protected void onUserLeaveHint() {
+        stratForeground();
+        super.onUserLeaveHint();
     }
 
     private void stratForeground() {
