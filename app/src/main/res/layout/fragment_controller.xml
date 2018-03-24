@@ -41,7 +41,8 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="제목" />
+                        android:text="제목"
+                        android:textAppearance="@style/TextAppearance.AppCompat" />
 
                     <TextView
                         android:id="@+id/controller_artist"
@@ -54,23 +55,23 @@
 
             </LinearLayout>
 
-                <ImageButton
-                    android:id="@+id/prev_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:srcCompat="@drawable/ic_skip_previous_black_24dp" />
+            <ImageButton
+                android:id="@+id/prev_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/ic_skip_previous_black_24dp" />
 
-                <ImageButton
-                    android:id="@+id/play_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:srcCompat="@drawable/ic_play_circle_filled_black_24dp" />
+            <ImageButton
+                android:id="@+id/play_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/ic_play_circle_filled_black_24dp" />
 
-                <ImageButton
-                    android:id="@+id/next_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:srcCompat="@drawable/ic_skip_next_black_24dp" />
-            </LinearLayout>
+            <ImageButton
+                android:id="@+id/next_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:srcCompat="@drawable/ic_skip_next_black_24dp" />
         </LinearLayout>
     </LinearLayout>
+</LinearLayout>
