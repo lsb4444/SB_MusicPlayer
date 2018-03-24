@@ -1,18 +1,12 @@
 package com.lsb.sb_musicplayer.fragment;
 
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.VectorDrawable;
 import android.media.MediaPlayer;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,7 +15,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-
 import com.lsb.sb_musicplayer.R;
 import com.lsb.sb_musicplayer.service.MyMusicService;
 
@@ -48,11 +41,45 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
     private MyMusicService mMyService;
     private boolean mBound;
     private MediaPlayer mMediaPlayer;
+    private NowPlayingMusicFragment fragment;
 
     public NowPlayingMusicFragment() {
         // Required empty public constructor
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        Intent service = new Intent(getContext(), MyMusicService.class);
+
+        serviceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+                mMyService = ((MyMusicService.MyBinder) iBinder).getService();
+                fragment = (NowPlayingMusicFragment) getFragmentManager().findFragmentByTag("android:switcher:" + R.id.view_pager + ":" + 0);
+                mMyService.setNowCallback(fragment);
+                mBound = true;
+                if (mMyService.mMediaPlayer != null){
+                    mMyService.uiUpdata();
+                }
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName componentName) {
+                mBound = false;
+            }
+        };
+        getActivity().bindService(service, serviceConnection, Context.BIND_AUTO_CREATE);
+
+    }
+
+    @Override
+    public void onDestroy() {
+        if (mBound) {
+            getContext().unbindService(serviceConnection);
+        }
+        super.onDestroy();
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -103,25 +130,6 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
         mPervious.setOnClickListener(this);
         mOneRepeat.setOnClickListener(this);
         mRepeat.setOnClickListener(this);
-
-
-        final NowPlayingMusicFragment fragment = (NowPlayingMusicFragment) getFragmentManager().findFragmentByTag("android:switcher:" + R.id.view_pager + ":" + 0);
-        Intent service = new Intent(getContext(), MyMusicService.class);
-        serviceConnection = new ServiceConnection() {
-
-            @Override
-            public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-                mMyService = ((MyMusicService.MyBinder) iBinder).getService();
-                mMyService.setNowCallback(fragment);
-                mBound = true;
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName componentName) {
-                mBound = false;
-            }
-        };
-        getContext().bindService(service, serviceConnection, Context.BIND_AUTO_CREATE);
 
 
         return v;
@@ -175,32 +183,13 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
         }
     }
 
-    public void chageImage(Drawable drawable) {
-        mPlay.setImageDrawable(drawable);
-    }
-
     @Override
-    public void onNowCallback(MediaPlayer mediaPlayer, final boolean play) {
+    public void onNowCallback(MediaPlayer mediaPlayer, boolean play) {
+
         mMediaPlayer = mediaPlayer;
-        if (play) {
-            Drawable drawable = ActivityCompat.getDrawable(getActivity(), R.drawable.ic_pause_circle_filled_black_24dp);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                VectorDrawable vectorDrawable = (VectorDrawable) drawable;
-                chageImage(vectorDrawable);
-            } else {
-                BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
-                chageImage(bitmapDrawable);
-            }
-        } else {
-            Drawable drawable = ActivityCompat.getDrawable(getActivity(), R.drawable.ic_play_circle_filled_black_24dp);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                VectorDrawable vectorDrawable = (VectorDrawable) drawable;
-                chageImage(vectorDrawable);
-            } else {
-                BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
-                chageImage(bitmapDrawable);
-            }
-        }
+
+        mMyService.palyButtonChange(mPlay, play);
+
         playTime(play);
 
     }

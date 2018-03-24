@@ -10,8 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.Toast;
-
 import com.lsb.sb_musicplayer.MainActivity;
 import com.lsb.sb_musicplayer.R;
 import com.lsb.sb_musicplayer.adapter.MyMusicCursorAdapter;
@@ -63,8 +61,6 @@ public class MusicListFragment extends Fragment {
 
 //                String uri = currentCursor.getString(currentCursor.getColumnIndex(MediaStore.Audio.Media.DATA));
                 ((MainActivity) getActivity()).getViewPager().setCurrentItem(0);
-
-                Toast.makeText(getContext(), "" + position, Toast.LENGTH_SHORT).show();
                 // https://developer.android.com/guide/topics/media/mediaplayer.html
                 Intent intent = new Intent(getContext(), MyMusicService.class);
                 intent.setAction(MyMusicService.ACTION_PLAY);

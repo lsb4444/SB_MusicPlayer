@@ -1,17 +1,25 @@
 package com.lsb.sb_musicplayer.service;
 
+import android.app.Notification;
 import android.app.Service;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.VectorDrawable;
 import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
+import android.util.Log;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,6 +38,7 @@ public class MyMusicService extends Service {
 
     public static final String ACTION_ONE_REPEAT = "com.lsb.simple_player.action.onerepeat";
     public static final String ACTION_REPEAT = "com.lsb.simple_player.action.repeat";
+    public static final String ACTION_FOREGRUOUND = "com.lsb.simple_player.action.foreground";
 
     private boolean mOneRepeat;
     private boolean mRepeat;
@@ -42,13 +51,12 @@ public class MyMusicService extends Service {
     MusicServiceCallback2 mCallback2;
     private Uri mUri;
     private int mLength;
-    private int mNowPosition;
+    private int mNowPosition = -1;
     private Cursor mCursor;
 
 
     public MyMusicService() {
-        mMediaPlayer = new MediaPlayer();
-        mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+
     }
 
 
@@ -66,10 +74,15 @@ public class MyMusicService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-
+        Log.i("서비스 스타트", "2222222222");
         String action = intent.getAction();
         switch (action) {
             case ACTION_PLAY:
+                if (mMediaPlayer == null) {
+                    mMediaPlayer = new MediaPlayer();
+                    mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                }
+
 //                mUri = intent.getParcelableExtra("uri");
                 mLength = intent.getIntExtra("length", -1);
                 mNowPosition = intent.getIntExtra("now_position", -1);
@@ -100,6 +113,7 @@ public class MyMusicService extends Service {
 
             case ACTION_NEXT:
                 next();
+                stopSelf();
                 break;
 
             case ACTION_ONE_REPEAT:
@@ -116,25 +130,40 @@ public class MyMusicService extends Service {
                     mRepeat = false;
                 }
                 break;
+
+            case ACTION_FOREGRUOUND:
+                startForeground(1, createNotification());
+                break;
         }
 
-        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mediaPlayer) {
-                if (!mediaPlayer.isPlaying()) {
-                    if (!mOneRepeat && !mRepeat) {
-                        mCallback.onControllerCallback(mMediaPlayer, false);
-                        mCallback2.onNowCallback(mMediaPlayer, false);
-                        pause();
-                    } else if (mRepeat) {
-                        next();
-                    } else if (mOneRepeat) {
-                        one_repeat();
+        if (mMediaPlayer != null) {
+            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mediaPlayer) {
+                    if (!mediaPlayer.isPlaying()) {
+                        if (!mOneRepeat && !mRepeat) {
+                            mCallback.onControllerCallback(mMediaPlayer, false);
+                            mCallback2.onNowCallback(mMediaPlayer, false);
+                            pause();
+                        } else if (mRepeat) {
+                            next();
+                        } else if (mOneRepeat) {
+                            one_repeat();
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
         return START_NOT_STICKY;
+    }
+
+    private Notification createNotification() {
+        android.support.v7.app.NotificationCompat.Builder builder = new android.support.v7.app.NotificationCompat.Builder(this);
+        builder.setContentTitle("뮤직플레이어");
+        builder.setContentText("아아");
+        builder.setSmallIcon(R.mipmap.ic_launcher);
+
+        return builder.build();
     }
 
 
@@ -191,8 +220,8 @@ public class MyMusicService extends Service {
 
     // 다음곡 메소드
     public void next() {
-        mMediaPlayer.reset();
         if (mMediaPlayer != null) {
+            mMediaPlayer.reset();
             if (mNowPosition < mLength) {
                 mNowPosition++;
                 if (mNowPosition == mLength) {
@@ -211,20 +240,22 @@ public class MyMusicService extends Service {
 
     // 이전곡 메소드
     public void peve() {
-        mMediaPlayer.reset();
-        if (mNowPosition != 0) {
-            mNowPosition--;
-            mCursor.moveToPrevious();
-        } else {
-            mNowPosition = mLength - 1;
-            mCursor.moveToLast();
-        }
+        if (mMediaPlayer != null) {
+            mMediaPlayer.reset();
+            if (mNowPosition != 0) {
+                mNowPosition--;
+                mCursor.moveToPrevious();
+            } else {
+                mNowPosition = mLength - 1;
+                mCursor.moveToLast();
+            }
 
-        mUri = Uri.parse(mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DATA)));
-        try {
-            play(mUri);
-        } catch (IOException e) {
-            e.printStackTrace();
+            mUri = Uri.parse(mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DATA)));
+            try {
+                play(mUri);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -247,6 +278,11 @@ public class MyMusicService extends Service {
         return mMediaPlayer;
     }
 
+    // 재생성 업데이트
+    public void uiUpdata() {
+        mCallback.onControllerCallback(mMediaPlayer, true);
+        mCallback2.onNowCallback(mMediaPlayer, true);
+    }
 
     // 음악 사진, 제목, 가수 이름
     public void uiChange(ImageView imageView, TextView titleView, TextView artistView) {
@@ -265,6 +301,30 @@ public class MyMusicService extends Service {
             imageView.setImageBitmap(bitmap);
         } else {
             imageView.setImageResource(R.mipmap.ic_launcher);
+        }
+    }
+
+
+    // play버튼 체인지 메소드
+    public void palyButtonChange(ImageButton imageButton, boolean play) {
+        if (play) {
+            Drawable drawable = ActivityCompat.getDrawable(this, R.drawable.ic_pause_circle_filled_black_24dp);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                VectorDrawable vectorDrawable = (VectorDrawable) drawable;
+                imageButton.setImageDrawable(vectorDrawable);
+            } else {
+                BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
+                imageButton.setImageDrawable(bitmapDrawable);
+            }
+        } else {
+            Drawable drawable = ActivityCompat.getDrawable(this, R.drawable.ic_play_circle_filled_black_24dp);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                VectorDrawable vectorDrawable = (VectorDrawable) drawable;
+                imageButton.setImageDrawable(vectorDrawable);
+            } else {
+                BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
+                imageButton.setImageDrawable(bitmapDrawable);
+            }
         }
     }
 
