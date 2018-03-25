@@ -1,7 +1,6 @@
 package com.lsb.sb_musicplayer;
 
 import android.Manifest;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 
 import android.support.annotation.NonNull;
@@ -18,14 +17,12 @@ import android.widget.Toast;
 
 import com.lsb.sb_musicplayer.fragment.MusicListFragment;
 import com.lsb.sb_musicplayer.fragment.NowPlayingMusicFragment;
-import com.lsb.sb_musicplayer.service.MyMusicService;
 
 public class MainActivity extends AppCompatActivity {
 
     public static final int REQUEST_CODE_READ_EXTERNAL_STORAGE = 1000;
     private TabLayout mTabLayout;
     private ViewPager mViewPager;
-
 
 
     @Override
@@ -136,26 +133,5 @@ public class MainActivity extends AppCompatActivity {
 
             }
         }
-    }
-
-
-    // 뒤로가기 버튼
-    @Override
-    public void onBackPressed() {
-        stratForeground();
-        super.onBackPressed();
-    }
-
-    // 홈버튼
-    @Override
-    protected void onUserLeaveHint() {
-        stratForeground();
-        super.onUserLeaveHint();
-    }
-
-    private void stratForeground() {
-        Intent intent = new Intent(this, MyMusicService.class);
-        intent.setAction(MyMusicService.ACTION_FOREGRUOUND);
-        startService(intent);
     }
 }

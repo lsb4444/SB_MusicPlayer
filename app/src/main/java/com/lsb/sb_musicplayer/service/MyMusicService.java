@@ -1,7 +1,7 @@
 package com.lsb.sb_musicplayer.service;
-
-import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
+
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -18,15 +18,19 @@ import android.os.Build;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.media.app.NotificationCompat;
+import android.util.Log;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.RemoteViews;
+
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.lsb.sb_musicplayer.MainActivity;
 import com.lsb.sb_musicplayer.R;
 
 import java.io.IOException;
+
 
 public class MyMusicService extends Service {
 
@@ -39,12 +43,16 @@ public class MyMusicService extends Service {
 
     public static final String ACTION_ONE_REPEAT = "com.lsb.simple_player.action.onerepeat";
     public static final String ACTION_REPEAT = "com.lsb.simple_player.action.repeat";
-    public static final String ACTION_FOREGRUOUND = "com.lsb.simple_player.action.foreground";
+
+    public static final String ACTION_NOTI_PLAY = "com.lsb.simple_player.action.notiplay";
+    public static final String ACTION_CLOSE = "com.lsb.simple_player.action.close";
 
     private boolean mOneRepeat;
     private boolean mRepeat;
 
     public MediaPlayer mMediaPlayer;
+
+    public boolean mMediaPlayerCheck;
 
     private MyBinder mBinder = new MyBinder();
 
@@ -86,7 +94,10 @@ public class MyMusicService extends Service {
                 mLength = intent.getIntExtra("length", -1);
                 mNowPosition = intent.getIntExtra("now_position", -1);
 
-                mCursor.moveToPosition(mNowPosition);
+                if (mNowPosition != -1) {
+                    mCursor.moveToPosition(mNowPosition);
+                }
+
                 try {
                     mMediaPlayer.reset();
 
@@ -94,7 +105,7 @@ public class MyMusicService extends Service {
                     play(mUri);
 
                 } catch (IOException e) {
-                    Toast.makeText(this, "I can't play a song", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "I can't playing a song", Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
                 }
                 break;
@@ -112,8 +123,8 @@ public class MyMusicService extends Service {
 
             case ACTION_NEXT:
                 next();
-                stopSelf();
                 break;
+
 
             case ACTION_ONE_REPEAT:
                 if (!mOneRepeat) {
@@ -130,11 +141,25 @@ public class MyMusicService extends Service {
                 }
                 break;
 
-            case ACTION_FOREGRUOUND:
-                startForeground(1, createNotification());
-//                NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-//                manager.notify(1, createNotification());
+            case ACTION_NOTI_PLAY:
+
+                if (mMediaPlayer.isPlaying()) {
+                    pause();
+                } else {
+                    reStart();
+                }
                 break;
+            case ACTION_CLOSE:
+                if (mMediaPlayer.isPlaying()) {
+                    mMediaPlayer.stop();
+                    mMediaPlayer.release();
+                    mMediaPlayer = null;
+                } else {
+                    mMediaPlayer.release();
+                    mMediaPlayer = null;
+                }
+                stopForeground(true);
+                stopService(new Intent(this, MyMusicService.class));
         }
 
         // 재생 완료 후 버튼 처리 및 이벤트 처리
@@ -156,37 +181,83 @@ public class MyMusicService extends Service {
                 }
             });
         }
+        createNotification();
         return START_NOT_STICKY;
     }
 
-    private Notification createNotification() {
+    private void createNotification() {
         MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
         mediaMetadataRetriever.setDataSource(this, mUri);
         byte[] picture = mediaMetadataRetriever.getEmbeddedPicture();
 
         String title = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
         String artist = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-        RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notify);
-        contentView.setTextViewText(R.id.noti_title, title);
-        contentView.setTextViewText(R.id.noti_artist, artist);
+        Bitmap bitmap = null;
         if (picture != null) {
-            Bitmap bitmap = BitmapFactory.decodeByteArray(picture, 0, picture.length);
-            contentView.setImageViewBitmap(R.id.noti_image, bitmap);
+            bitmap = BitmapFactory.decodeByteArray(picture, 0, picture.length);
         } else {
-
+            bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
         }
-//        contentView.setImageViewBitmap(R.id.noti_image2,bitmap);
 
 
-        Notification mBuilder = new Notification.Builder(this)
-                .setSmallIcon(R.drawable.ic_launcher_background)
-                .setContentTitle("SB_Player")
-                .setContent(contentView)
-                .build();
+        android.support.v7.app.NotificationCompat.Builder builder = new android.support.v7.app.NotificationCompat.Builder(this);
+
+        builder.setContentTitle(title);
+        builder.setContentText(artist);
+
+        builder.setStyle(new NotificationCompat.MediaStyle());
+
+        builder.setSmallIcon(R.mipmap.ic_launcher);
+        builder.setLargeIcon(bitmap);
+
+        Intent intent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this,
+                1000, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        builder.setContentIntent(pendingIntent);
 
 
-        return mBuilder;
+        // 뒤로가기
+        Intent intent_prev = new Intent(this, MyMusicService.class);
+        intent_prev.setAction(ACTION_PREV);
 
+        PendingIntent pendingPrevIntent = PendingIntent.getService(this, 1002, intent_prev, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        builder.addAction(R.drawable.ic_skip_previous_black_24dp,
+                "prev", pendingPrevIntent);
+
+
+        // 플레이
+        Intent intent_play = new Intent(this, MyMusicService.class);
+        intent_play.setAction(ACTION_NOTI_PLAY);
+
+        PendingIntent pendingPlayIntent = PendingIntent.getService(this, 1001, intent_play, PendingIntent.FLAG_UPDATE_CURRENT);
+        if (mMediaPlayerCheck) {
+            builder.addAction(R.drawable.ic_pause_circle_filled_black_24dp, "play", pendingPlayIntent);
+        } else {
+            builder.addAction(R.drawable.ic_play_circle_filled_black_24dp, "play", pendingPlayIntent);
+        }
+
+        // 넥스트
+        Intent intent_next = new Intent(this, MyMusicService.class);
+        intent_next.setAction(ACTION_NEXT);
+
+        PendingIntent pendingNextIntent = PendingIntent.getService(this, 1003, intent_next, PendingIntent.FLAG_UPDATE_CURRENT);
+
+
+        builder.addAction(R.drawable.ic_skip_next_black_24dp,
+                "next", pendingNextIntent);
+
+        Intent intent_close = new Intent(this, MyMusicService.class);
+        intent_close.setAction(ACTION_CLOSE);
+
+        PendingIntent pendingCloseIntent = PendingIntent.getService(this, 1003, intent_close, PendingIntent.FLAG_UPDATE_CURRENT);
+
+
+        builder.addAction(R.drawable.ic_close_black_24dp,
+                "close", pendingCloseIntent);
+
+        startForeground(1, builder.build());
     }
 
 
@@ -203,10 +274,12 @@ public class MyMusicService extends Service {
 
 
     // 재생 메소드
+
     public void play(Uri uri) throws IOException {
         if (mMediaPlayer.isPlaying()) {
             mMediaPlayer.reset();
         }
+        mMediaPlayerCheck = true;
         mMediaPlayer.setDataSource(this, uri);
         mMediaPlayer.prepareAsync();
         mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -218,7 +291,6 @@ public class MyMusicService extends Service {
         });
         mCallback.onControllerCallback(mMediaPlayer, true);
         mCallback2.onNowCallback(mMediaPlayer, true);
-
     }
 
     // 멈춤 메소드
@@ -227,6 +299,7 @@ public class MyMusicService extends Service {
 //            mMediaPlayer.stop();
 //            mMediaPlayer.reset();
             mMediaPlayer.pause();
+            mMediaPlayerCheck = false;
             mCallback.onControllerCallback(mMediaPlayer, false);
             mCallback2.onNowCallback(mMediaPlayer, false);
         }
@@ -236,6 +309,7 @@ public class MyMusicService extends Service {
     public void reStart() {
         if (!mMediaPlayer.isPlaying()) {
             mMediaPlayer.start();
+            mMediaPlayerCheck = true;
             mCallback.onControllerCallback(mMediaPlayer, true);
             mCallback2.onNowCallback(mMediaPlayer, true);
         }
@@ -303,8 +377,15 @@ public class MyMusicService extends Service {
 
     // 재생성 업데이트
     public void uiUpdata() {
-        mCallback.onControllerCallback(mMediaPlayer, true);
-        mCallback2.onNowCallback(mMediaPlayer, true);
+        if (mMediaPlayer.isPlaying()) {
+            mCallback.onControllerCallback(mMediaPlayer, true);
+            mCallback2.onNowCallback(mMediaPlayer, true);
+
+        } else {
+            mCallback.onControllerCallback(mMediaPlayer, false);
+            mCallback2.onNowCallback(mMediaPlayer, false);
+
+        }
     }
 
     // 음악 사진, 제목, 가수 이름
@@ -316,7 +397,9 @@ public class MyMusicService extends Service {
         //수정 전 코드
 //        String title = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
 //        String artist = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-        mCursor.moveToPosition(mNowPosition);
+        if (mNowPosition != -1) {
+            mCursor.moveToPosition(mNowPosition);
+        }
         String title = mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
         String artist = mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
 
