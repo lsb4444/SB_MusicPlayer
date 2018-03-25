@@ -1,4 +1,5 @@
 package com.lsb.sb_musicplayer.service;
+
 import android.app.PendingIntent;
 import android.app.Service;
 
@@ -18,11 +19,12 @@ import android.os.Build;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
+
 import android.support.v4.media.app.NotificationCompat;
-import android.util.Log;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -72,17 +74,20 @@ public class MyMusicService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        mCursor = getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                null,
-                MediaStore.MediaColumns.MIME_TYPE + "='" + "audio/mpeg" + "'",
-                null,
-                null);
+
     }
 
     // 서비스 시작
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent.getAction();
+
+        mCursor = getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                null,
+                MediaStore.MediaColumns.MIME_TYPE + "='" + "audio/mpeg" + "'",
+                null,
+                null);
+
         switch (action) {
             case ACTION_PLAY:
                 if (mMediaPlayer == null) {
@@ -150,16 +155,21 @@ public class MyMusicService extends Service {
                 }
                 break;
             case ACTION_CLOSE:
-                if (mMediaPlayer.isPlaying()) {
-                    mMediaPlayer.stop();
-                    mMediaPlayer.release();
-                    mMediaPlayer = null;
-                } else {
-                    mMediaPlayer.release();
-                    mMediaPlayer = null;
-                }
+                mMediaPlayerCheck = false;
+                mMediaPlayer = null;
+//                if (mMediaPlayer.isPlaying()) {
+//                    mMediaPlayer.stop();
+//                    mMediaPlayer.release();
+//                    mMediaPlayer = null;
+//                } else {
+//                    mMediaPlayer.release();
+//                    mMediaPlayer = null;
+//                }
+
+
                 stopForeground(true);
                 stopService(new Intent(this, MyMusicService.class));
+                System.exit(0);
         }
 
         // 재생 완료 후 버튼 처리 및 이벤트 처리
@@ -181,7 +191,7 @@ public class MyMusicService extends Service {
                 }
             });
         }
-        createNotification();
+
         return START_NOT_STICKY;
     }
 
@@ -190,8 +200,8 @@ public class MyMusicService extends Service {
         mediaMetadataRetriever.setDataSource(this, mUri);
         byte[] picture = mediaMetadataRetriever.getEmbeddedPicture();
 
-        String title = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
-        String artist = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+        String title = mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
+        String artist = mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
         Bitmap bitmap = null;
         if (picture != null) {
             bitmap = BitmapFactory.decodeByteArray(picture, 0, picture.length);
@@ -276,10 +286,10 @@ public class MyMusicService extends Service {
     // 재생 메소드
 
     public void play(Uri uri) throws IOException {
+        mMediaPlayerCheck = true;
         if (mMediaPlayer.isPlaying()) {
             mMediaPlayer.reset();
         }
-        mMediaPlayerCheck = true;
         mMediaPlayer.setDataSource(this, uri);
         mMediaPlayer.prepareAsync();
         mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -291,28 +301,31 @@ public class MyMusicService extends Service {
         });
         mCallback.onControllerCallback(mMediaPlayer, true);
         mCallback2.onNowCallback(mMediaPlayer, true);
+        createNotification();
     }
 
     // 멈춤 메소드
     public void pause() {
+        mMediaPlayerCheck = false;
         if (mMediaPlayer.isPlaying()) {
 //            mMediaPlayer.stop();
 //            mMediaPlayer.reset();
             mMediaPlayer.pause();
-            mMediaPlayerCheck = false;
             mCallback.onControllerCallback(mMediaPlayer, false);
             mCallback2.onNowCallback(mMediaPlayer, false);
         }
+        createNotification();
     }
 
     // 리스타트 메소드
     public void reStart() {
+        mMediaPlayerCheck = true;
         if (!mMediaPlayer.isPlaying()) {
             mMediaPlayer.start();
-            mMediaPlayerCheck = true;
             mCallback.onControllerCallback(mMediaPlayer, true);
             mCallback2.onNowCallback(mMediaPlayer, true);
         }
+        createNotification();
     }
 
     // 다음곡 메소드
@@ -341,12 +354,11 @@ public class MyMusicService extends Service {
             mMediaPlayer.reset();
             if (mNowPosition != 0) {
                 mNowPosition--;
-                mCursor.moveToPrevious();
             } else {
                 mNowPosition = mLength - 1;
-                mCursor.moveToLast();
-            }
 
+            }
+            mCursor.moveToPosition(mNowPosition);
             mUri = Uri.parse(mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DATA)));
             try {
                 play(mUri);
@@ -436,6 +448,36 @@ public class MyMusicService extends Service {
                 imageButton.setImageDrawable(bitmapDrawable);
             }
         }
+    }
+
+
+    // 시간 메소드
+    public void playTime(final SeekBar seekBar, TextView maxText, final TextView nowText) {
+
+        int duration = mMediaPlayer.getDuration();
+        int min = duration / 1000 / 60;
+        int sec = duration / 1000 % 60;
+
+        maxText.setText((String.format("%d:%02d", min, sec)));
+        seekBar.setMax(duration);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int CurrentPosition;
+                if (mMediaPlayerCheck) {
+                    CurrentPosition = mMediaPlayer.getCurrentPosition();
+                    int min = CurrentPosition / 1000 / 60;
+                    int sec = CurrentPosition / 1000 % 60;
+                    seekBar.setProgress(CurrentPosition);
+
+                    nowText.setText(String.format("%d:%02d", min, sec));
+                    nowText.postDelayed(this, 100);
+                } else {
+                    nowText.removeCallbacks(this);
+                }
+            }
+        }).run();
     }
 
     public interface MusicServiceCallback {

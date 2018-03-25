@@ -3,6 +3,8 @@ package com.lsb.sb_musicplayer;
 import android.Manifest;
 import android.content.pm.PackageManager;
 
+import android.database.Cursor;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
@@ -15,8 +17,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.Toast;
 
+import com.gun0912.tedpermission.PermissionListener;
+import com.gun0912.tedpermission.TedPermission;
 import com.lsb.sb_musicplayer.fragment.MusicListFragment;
 import com.lsb.sb_musicplayer.fragment.NowPlayingMusicFragment;
+
+import java.util.ArrayList;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,18 +32,13 @@ public class MainActivity extends AppCompatActivity {
     private ViewPager mViewPager;
 
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-//        임시 권한 체크
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    REQUEST_CODE_READ_EXTERNAL_STORAGE);
-        }
 
         mTabLayout = findViewById(R.id.tab_layout);
         mViewPager = findViewById(R.id.view_pager);
@@ -119,19 +121,4 @@ public class MainActivity extends AppCompatActivity {
         return mViewPager;
     }
 
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        //임시 권한 체크
-        if (requestCode == REQUEST_CODE_READ_EXTERNAL_STORAGE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-            } else {
-                Toast.makeText(this, "권한 거절 됨", Toast.LENGTH_SHORT).show();
-
-            }
-        }
-    }
 }

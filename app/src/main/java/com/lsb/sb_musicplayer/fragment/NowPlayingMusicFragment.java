@@ -15,6 +15,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
 import com.lsb.sb_musicplayer.R;
 import com.lsb.sb_musicplayer.service.MyMusicService;
 
@@ -59,7 +60,7 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
                 fragment = (NowPlayingMusicFragment) getFragmentManager().findFragmentByTag("android:switcher:" + R.id.view_pager + ":" + 0);
                 mMyService.setNowCallback(fragment);
                 mBound = true;
-                if (mMyService.mMediaPlayer != null){
+                if (mMyService.mMediaPlayer != null) {
                     mMyService.uiUpdata();
                 }
             }
@@ -158,14 +159,17 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
                 break;
 
             case R.id.now_play_button:
-                if (mMediaPlayer.isPlaying()) {
-                    Intent pause = new Intent(getContext(), MyMusicService.class);
-                    pause.setAction(MyMusicService.ACTION_PAUSE);
-                    getContext().startService(pause);
-                } else {
-                    Intent re_start = new Intent(getContext(), MyMusicService.class);
-                    re_start.setAction(MyMusicService.ACTION_RESTART);
-                    getContext().startService(re_start);
+                if (mMediaPlayer != null) {
+
+                    if (mMediaPlayer.isPlaying()) {
+                        Intent pause = new Intent(getContext(), MyMusicService.class);
+                        pause.setAction(MyMusicService.ACTION_PAUSE);
+                        getContext().startService(pause);
+                    } else {
+                        Intent re_start = new Intent(getContext(), MyMusicService.class);
+                        re_start.setAction(MyMusicService.ACTION_RESTART);
+                        getContext().startService(re_start);
+                    }
                 }
                 break;
 
@@ -190,38 +194,42 @@ public class NowPlayingMusicFragment extends Fragment implements View.OnClickLis
 
         mMyService.palyButtonChange(mPlay, play);
 
-        playTime(play);
-
-    }
-
-
-    // 시간 표시 해주는 메소드
-    private void playTime(final boolean play) {
         mMyService.uiChange(mNowImage, mTitleText, mArtistText);
 
-        int duration = mMyService.getMediaPlayer().getDuration();
-        int min = duration / 1000 / 60;
-        int sec = duration / 1000 % 60;
+        mMyService.playTime(mSeekbar, mMaxTime, mNowTime);
+//        playTime(play);
 
-        mMaxTime.setText((String.format("%d:%02d", min, sec)));
-        mSeekbar.setMax(duration);
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                int CurrentPosition;
-                if (play) {
-                    CurrentPosition = mMyService.getMediaPlayer().getCurrentPosition();
-                    int min = CurrentPosition / 1000 / 60;
-                    int sec = CurrentPosition / 1000 % 60;
-                    mSeekbar.setProgress(CurrentPosition);
-
-                    mNowTime.setText(String.format("%d:%02d", min, sec));
-                    mNowTime.postDelayed(this, 1000);
-                } else {
-                    mNowTime.removeCallbacks(this);
-                }
-            }
-        }).run();
     }
+
+
+//    //     시간 표시 해주는 메소드
+//    private void playTime(final boolean play) {
+//
+//        int duration = mMyService.getMediaPlayer().getDuration();
+//        int min = duration / 1000 / 60;
+//        int sec = duration / 1000 % 60;
+//
+//        mMaxTime.setText((String.format("%d:%02d", min, sec)));
+//        mSeekbar.setMax(duration);
+//
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                int CurrentPosition;
+//                if (mMyService != null) {
+//                    if (play) {
+//                        CurrentPosition = mMyService.getMediaPlayer().getCurrentPosition();
+//                        int min = CurrentPosition / 1000 / 60;
+//                        int sec = CurrentPosition / 1000 % 60;
+//                        mSeekbar.setProgress(CurrentPosition);
+//
+//                        mNowTime.setText(String.format("%d:%02d", min, sec));
+//                        mNowTime.postDelayed(this, 100);
+//                    } else {
+//                        mNowTime.removeCallbacks(this);
+//                    }
+//                }
+//            }
+//        }).run();
+//    }
 }
