@@ -45,7 +45,7 @@
                     android:focusable="true"
                     android:focusableInTouchMode="true"
                     android:singleLine="true"
-                    android:text="제목"
+                    android:text="title"
                     android:textAppearance="@style/TextAppearance.AppCompat.Large" />
 
                 <TextView
@@ -54,7 +54,7 @@
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
                     android:maxLines="1"
-                    android:text="가수" />
+                    android:text="artist" />
 
 
             </LinearLayout>

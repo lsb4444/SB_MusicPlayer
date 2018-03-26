@@ -59,10 +59,11 @@ public class ControllerFragment extends Fragment implements MyMusicService.Music
                 fragment = (ControllerFragment) getFragmentManager().findFragmentById(R.id.controller_fragment);
                 mMyService = ((MyMusicService.MyBinder) iBinder).getService();
                 mMyService.setControllerCallback(fragment);
-
-                if (mMyService.mMediaPlayer != null){
+                if (mMyService.mMediaPlayer != null) {
                     mMyService.uiUpdata();
                 }
+
+
                 mBound = true;
             }
             @Override
@@ -118,7 +119,6 @@ public class ControllerFragment extends Fragment implements MyMusicService.Music
     public void onControllerCallback(MediaPlayer mediaPlayer, boolean play) {
 
         mMediaPlayer = mediaPlayer;
-
         mMyService.palyButtonChange(mPlayButton, play);
         mMyService.uiChange(mImageView, mTitleText, mArtistText);
     }

@@ -1,12 +1,17 @@
 package com.lsb.sb_musicplayer.service;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.VectorDrawable;
@@ -166,7 +171,6 @@ public class MyMusicService extends Service {
 //                    mMediaPlayer = null;
 //                }
 
-
                 stopForeground(true);
                 stopService(new Intent(this, MyMusicService.class));
                 System.exit(0);
@@ -196,6 +200,7 @@ public class MyMusicService extends Service {
     }
 
     private void createNotification() {
+
         MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
         mediaMetadataRetriever.setDataSource(this, mUri);
         byte[] picture = mediaMetadataRetriever.getEmbeddedPicture();
@@ -210,24 +215,34 @@ public class MyMusicService extends Service {
         }
 
 
-        android.support.v7.app.NotificationCompat.Builder builder = new android.support.v7.app.NotificationCompat.Builder(this);
+        String channerl_id = "music_channer1";
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+            android.app.NotificationManager notificationManager = (android.app.NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationChannel channelMessage = new NotificationChannel(channerl_id, "music_controller", NotificationManager.IMPORTANCE_LOW);
+            notificationManager.createNotificationChannel(channelMessage);
+
+        }
+
+        android.support.v7.app.NotificationCompat.Builder builder = new android.support.v7.app.NotificationCompat.Builder(this);
         builder.setContentTitle(title);
         builder.setContentText(artist);
-
         builder.setStyle(new NotificationCompat.MediaStyle());
-
         builder.setSmallIcon(R.mipmap.ic_launcher);
         builder.setLargeIcon(bitmap);
+
 
         Intent intent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this,
                 1000, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
         builder.setContentIntent(pendingIntent);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            builder.setChannelId(channerl_id);
+        }
 
-        // 뒤로가기
+            // 뒤로가기
         Intent intent_prev = new Intent(this, MyMusicService.class);
         intent_prev.setAction(ACTION_PREV);
 
@@ -286,10 +301,10 @@ public class MyMusicService extends Service {
     // 재생 메소드
 
     public void play(Uri uri) throws IOException {
-        mMediaPlayerCheck = true;
         if (mMediaPlayer.isPlaying()) {
             mMediaPlayer.reset();
         }
+        mMediaPlayerCheck = true;
         mMediaPlayer.setDataSource(this, uri);
         mMediaPlayer.prepareAsync();
         mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -306,10 +321,10 @@ public class MyMusicService extends Service {
 
     // 멈춤 메소드
     public void pause() {
-        mMediaPlayerCheck = false;
         if (mMediaPlayer.isPlaying()) {
 //            mMediaPlayer.stop();
 //            mMediaPlayer.reset();
+            mMediaPlayerCheck = false;
             mMediaPlayer.pause();
             mCallback.onControllerCallback(mMediaPlayer, false);
             mCallback2.onNowCallback(mMediaPlayer, false);
@@ -319,9 +334,9 @@ public class MyMusicService extends Service {
 
     // 리스타트 메소드
     public void reStart() {
-        mMediaPlayerCheck = true;
         if (!mMediaPlayer.isPlaying()) {
             mMediaPlayer.start();
+            mMediaPlayerCheck = true;
             mCallback.onControllerCallback(mMediaPlayer, true);
             mCallback2.onNowCallback(mMediaPlayer, true);
         }
@@ -356,7 +371,6 @@ public class MyMusicService extends Service {
                 mNowPosition--;
             } else {
                 mNowPosition = mLength - 1;
-
             }
             mCursor.moveToPosition(mNowPosition);
             mUri = Uri.parse(mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.DATA)));
